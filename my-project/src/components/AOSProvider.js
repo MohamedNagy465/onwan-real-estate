@@ -1,19 +1,16 @@
 
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import AOS from "aos";
 import "aos/dist/aos.css";
 
-export default function AOSProvider({ children }) {
+function AOSInitializer({ children }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    let timer;
-
-    // تأخير تشغيل AOS حتى انتهاء React من Hydration
-    timer = setTimeout(() => {
+    const timer = setTimeout(() => {
       AOS.init({
         duration: 800,
         easing: "ease-in-out",
@@ -28,10 +25,16 @@ export default function AOSProvider({ children }) {
       AOS.refreshHard();
     }, 300);
 
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [pathname]);
 
   return children;
+}
+
+export default function AOSProvider({ children }) {
+  return (
+    <Suspense fallback={children}>
+      <AOSInitializer>{children}</AOSInitializer>
+    </Suspense>
+  );
 }
